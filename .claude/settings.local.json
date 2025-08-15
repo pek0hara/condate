@@ -8,7 +8,13 @@
       "Bash(firebase use:*)",
       "Bash(firebase deploy:*)",
       "Bash(git init:*)",
-      "Bash(git add:*)"
+      "Bash(git add:*)",
+      "Bash(gh repo create:*)",
+      "Bash(git remote add:*)",
+      "Bash(git push:*)",
+      "Bash(git rm:*)",
+      "Bash(vercel:*)",
+      "Bash(git filter-branch:*)"
     ],
     "defaultMode": "acceptEdits"
   }
