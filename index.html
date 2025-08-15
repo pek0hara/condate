@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>献立アプリ</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>3日分の献立プランナー</h1>
+        </header>
+        
+        <main>
+            <div class="meal-planner">
+                <div class="day-section" data-day="1">
+                    <h2>1日目</h2>
+                    <div class="meal-inputs">
+                        <div class="meal-input">
+                            <label>朝食:</label>
+                            <input type="text" id="breakfast-1" placeholder="朝食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>昼食:</label>
+                            <input type="text" id="lunch-1" placeholder="昼食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>夕食:</label>
+                            <input type="text" id="dinner-1" placeholder="夕食メニューを入力">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-section" data-day="2">
+                    <h2>2日目</h2>
+                    <div class="meal-inputs">
+                        <div class="meal-input">
+                            <label>朝食:</label>
+                            <input type="text" id="breakfast-2" placeholder="朝食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>昼食:</label>
+                            <input type="text" id="lunch-2" placeholder="昼食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>夕食:</label>
+                            <input type="text" id="dinner-2" placeholder="夕食メニューを入力">
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="day-section" data-day="3">
+                    <h2>3日目</h2>
+                    <div class="meal-inputs">
+                        <div class="meal-input">
+                            <label>朝食:</label>
+                            <input type="text" id="breakfast-3" placeholder="朝食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>昼食:</label>
+                            <input type="text" id="lunch-3" placeholder="昼食メニューを入力">
+                        </div>
+                        <div class="meal-input">
+                            <label>夕食:</label>
+                            <input type="text" id="dinner-3" placeholder="夕食メニューを入力">
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="action-buttons">
+                <button id="save-plan" class="btn btn-primary">献立を保存</button>
+                <button id="load-plan" class="btn btn-secondary">献立を読込</button>
+                <button id="clear-plan" class="btn btn-danger">クリア</button>
+            </div>
+            
+            <div id="status-message" class="status-message"></div>
+        </main>
+    </div>
+
+    <!-- Firebase SDK -->
+    <script type="module" src="firebase-config.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
