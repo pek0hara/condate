@@ -57,7 +57,6 @@ class MealPlannerApp {
         document.getElementById('save-plan').addEventListener('click', () => this.saveMealPlan());
         document.getElementById('load-plan').addEventListener('click', () => this.loadMealPlan());
         document.getElementById('clear-plan').addEventListener('click', () => this.clearMealPlan());
-        document.getElementById('new-plan').addEventListener('click', () => this.createNewPlan());
         document.getElementById('share-plan').addEventListener('click', () => this.sharePlan());
     }
 
