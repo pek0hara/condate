@@ -18,7 +18,6 @@ class MealPlannerApp {
         this.initializeDates();
         this.initializeEventListeners();
         this.loadMealPlan();
-        this.checkForDateShift();
         this.loadMealSuggestions();
     }
 
@@ -51,6 +50,7 @@ class MealPlannerApp {
         const weekday = weekdays[date.getDay()];
         return `${month}月${day}日(${weekday})`;
     }
+
 
     initializePlanId() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -126,58 +126,50 @@ class MealPlannerApp {
     getMealPlanData() {
         const dates = this.getNext3Days();
         const mealPlan = {
-            dates: {
-                day1: dates[0].toISOString().split('T')[0],
-                day2: dates[1].toISOString().split('T')[0],
-                day3: dates[2].toISOString().split('T')[0]
-            },
-            day1: {
-                breakfast: document.getElementById('breakfast-1').value,
-                lunch: document.getElementById('lunch-1').value,
-                dinner: document.getElementById('dinner-1').value
-            },
-            day2: {
-                breakfast: document.getElementById('breakfast-2').value,
-                lunch: document.getElementById('lunch-2').value,
-                dinner: document.getElementById('dinner-2').value
-            },
-            day3: {
-                breakfast: document.getElementById('breakfast-3').value,
-                lunch: document.getElementById('lunch-3').value,
-                dinner: document.getElementById('dinner-3').value
-            },
-            lastUpdated: serverTimestamp()
+            planId: this.currentPlanId,
+            lastUpdated: serverTimestamp(),
+            meals: {}
         };
+        
+        // 日付をキーとして献立データを保存
+        dates.forEach((date, index) => {
+            const dateStr = date.toISOString().split('T')[0];
+            mealPlan.meals[dateStr] = {
+                date: dateStr,
+                breakfast: document.getElementById(`breakfast-${index + 1}`).value,
+                lunch: document.getElementById(`lunch-${index + 1}`).value,
+                dinner: document.getElementById(`dinner-${index + 1}`).value
+            };
+        });
+        
         return mealPlan;
     }
 
     setMealPlanData(mealPlan) {
-        if (!mealPlan) return;
+        if (!mealPlan || !mealPlan.meals) return;
 
         const setInputValue = (id, value) => {
             const input = document.getElementById(id);
-            if (input && value) {
-                input.value = value;
+            if (input) {
+                input.value = value || '';
             }
         };
 
-        if (mealPlan.day1) {
-            setInputValue('breakfast-1', mealPlan.day1.breakfast);
-            setInputValue('lunch-1', mealPlan.day1.lunch);
-            setInputValue('dinner-1', mealPlan.day1.dinner);
-        }
-
-        if (mealPlan.day2) {
-            setInputValue('breakfast-2', mealPlan.day2.breakfast);
-            setInputValue('lunch-2', mealPlan.day2.lunch);
-            setInputValue('dinner-2', mealPlan.day2.dinner);
-        }
-
-        if (mealPlan.day3) {
-            setInputValue('breakfast-3', mealPlan.day3.breakfast);
-            setInputValue('lunch-3', mealPlan.day3.lunch);
-            setInputValue('dinner-3', mealPlan.day3.dinner);
-        }
+        const dates = this.getNext3Days();
+        dates.forEach((date, index) => {
+            const dateStr = date.toISOString().split('T')[0];
+            const mealData = mealPlan.meals[dateStr];
+            
+            if (mealData) {
+                setInputValue(`breakfast-${index + 1}`, mealData.breakfast);
+                setInputValue(`lunch-${index + 1}`, mealData.lunch);
+                setInputValue(`dinner-${index + 1}`, mealData.dinner);
+            } else {
+                setInputValue(`breakfast-${index + 1}`, '');
+                setInputValue(`lunch-${index + 1}`, '');
+                setInputValue(`dinner-${index + 1}`, '');
+            }
+        });
     }
 
     clearAllInputs() {
@@ -219,7 +211,17 @@ class MealPlannerApp {
             
             if (docSnap.exists()) {
                 const mealPlan = docSnap.data();
-                this.setMealPlanData(mealPlan);
+                
+                // 日付ベースのデータ構造かチェック
+                if (mealPlan.meals) {
+                    // 新しい形式
+                    await this.checkAndMigratePastMeals(mealPlan);
+                    this.setMealPlanData(mealPlan);
+                } else {
+                    // 古い形式からの移行
+                    await this.migrateLegacyData(mealPlan);
+                }
+                
                 this.showStatus(`献立が正常に読み込まれました！ (ID: ${this.currentPlanId})`, 'success');
             } else {
                 this.showStatus(`保存された献立が見つかりませんでした。新しい献立を作成してください。 (ID: ${this.currentPlanId})`, 'info');
@@ -266,85 +268,105 @@ class MealPlannerApp {
         }
     }
 
-    async checkForDateShift() {
+    async checkAndMigratePastMeals(mealPlan) {
         try {
-            const docRef = doc(db, 'mealPlans', this.currentPlanId);
-            const docSnap = await getDoc(docRef);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const currentDates = this.getNext3Days();
+            const currentDateStrs = currentDates.map(date => date.toISOString().split('T')[0]);
             
-            if (docSnap.exists()) {
-                const mealPlan = docSnap.data();
-                if (mealPlan.dates) {
-                    const savedDay1 = new Date(mealPlan.dates.day1);
-                    const currentDay1 = this.getNext3Days()[0];
-                    
-                    if (savedDay1.toDateString() !== currentDay1.toDateString()) {
-                        await this.handleDateShift(mealPlan);
-                    }
+            // 過去の日付の献立を履歴に移動
+            const pastMeals = {};
+            for (const [dateStr, mealData] of Object.entries(mealPlan.meals)) {
+                const mealDate = new Date(dateStr);
+                mealDate.setHours(0, 0, 0, 0);
+                
+                if (mealDate < today && !currentDateStrs.includes(dateStr)) {
+                    // 過去の日付で現在の3日間に含まれない
+                    await this.saveMealToHistory(dateStr, mealData);
+                    pastMeals[dateStr] = mealData;
                 }
             }
+            
+            // 過去の献立をmealPlanから削除
+            for (const dateStr of Object.keys(pastMeals)) {
+                delete mealPlan.meals[dateStr];
+            }
+            
+            // 更新されたmealPlanを保存
+            if (Object.keys(pastMeals).length > 0) {
+                await this.saveMealPlan(true);
+                console.log(`${Object.keys(pastMeals).length}日分の過去の献立を履歴に移動しました`);
+            }
+            
         } catch (error) {
-            console.error('日付シフトチェックエラー:', error);
+            console.error('過去の献立移行エラー:', error);
         }
     }
 
-    async handleDateShift(oldMealPlan) {
-        const oldDates = [
-            new Date(oldMealPlan.dates.day1),
-            new Date(oldMealPlan.dates.day2),
-            new Date(oldMealPlan.dates.day3)
-        ];
-
-        await this.saveToHistory(oldMealPlan, oldDates);
-
-        const currentDates = this.getNext3Days();
-        const shiftedPlan = this.shiftMealPlan(oldMealPlan, oldDates, currentDates);
-        
-        this.setMealPlanData(shiftedPlan);
-        await this.saveMealPlan(true);
-        
-        this.showStatus('日付が更新されました。過去の献立は履歴に保存されました。', 'info');
-    }
-
-    async saveToHistory(mealPlan, dates) {
+    async migrateLegacyData(legacyMealPlan) {
         try {
-            const historyId = `history-${this.currentPlanId}-${dates[0].toISOString().split('T')[0]}`;
-            const historyData = {
-                ...mealPlan,
+            // 古い形式から新しい形式に変換
+            const newMealPlan = {
                 planId: this.currentPlanId,
-                savedAt: serverTimestamp(),
-                originalDates: {
-                    day1: dates[0].toISOString().split('T')[0],
-                    day2: dates[1].toISOString().split('T')[0],
-                    day3: dates[2].toISOString().split('T')[0]
-                }
+                lastUpdated: serverTimestamp(),
+                meals: {}
             };
             
-            const historyRef = doc(db, 'mealPlanHistory', historyId);
+            if (legacyMealPlan.dates) {
+                // 古い形式のデータがある場合
+                const oldDates = [
+                    legacyMealPlan.dates.day1,
+                    legacyMealPlan.dates.day2,
+                    legacyMealPlan.dates.day3
+                ];
+                
+                oldDates.forEach((dateStr, index) => {
+                    const dayKey = `day${index + 1}`;
+                    if (legacyMealPlan[dayKey]) {
+                        newMealPlan.meals[dateStr] = {
+                            date: dateStr,
+                            breakfast: legacyMealPlan[dayKey].breakfast || '',
+                            lunch: legacyMealPlan[dayKey].lunch || '',
+                            dinner: legacyMealPlan[dayKey].dinner || ''
+                        };
+                    }
+                });
+            }
+            
+            // 新しい形式で保存
+            const docRef = doc(db, 'mealPlans', this.currentPlanId);
+            await setDoc(docRef, newMealPlan);
+            
+            // 過去の献立があれば履歴に移動
+            await this.checkAndMigratePastMeals(newMealPlan);
+            this.setMealPlanData(newMealPlan);
+            
+        } catch (error) {
+            console.error('レガシーデータ移行エラー:', error);
+        }
+    }
+
+    async saveMealToHistory(dateStr, mealData) {
+        try {
+            const historyId = `history-${this.currentPlanId}-${dateStr}`;
+            const date = new Date(dateStr);
+            
+            const historyData = {
+                planId: this.currentPlanId,
+                date: dateStr,
+                dateFormatted: this.formatDate(date),
+                breakfast: mealData.breakfast || '',
+                lunch: mealData.lunch || '',
+                dinner: mealData.dinner || '',
+                savedAt: serverTimestamp()
+            };
+            
+            const historyRef = doc(db, 'dailyMealHistory', historyId);
             await setDoc(historyRef, historyData);
         } catch (error) {
             console.error('履歴保存エラー:', error);
         }
-    }
-
-    shiftMealPlan(oldPlan, oldDates, newDates) {
-        const shiftedPlan = {
-            day1: { breakfast: '', lunch: '', dinner: '' },
-            day2: { breakfast: '', lunch: '', dinner: '' },
-            day3: { breakfast: '', lunch: '', dinner: '' }
-        };
-
-        for (let i = 0; i < 3; i++) {
-            for (let j = 0; j < 3; j++) {
-                if (oldDates[j].toDateString() === newDates[i].toDateString()) {
-                    const dayKey = `day${i + 1}`;
-                    const oldDayKey = `day${j + 1}`;
-                    shiftedPlan[dayKey] = oldPlan[oldDayKey];
-                    break;
-                }
-            }
-        }
-
-        return shiftedPlan;
     }
 
     showHistory() {
@@ -382,7 +404,7 @@ class MealPlannerApp {
         try {
             this.showStatus('履歴を読み込み中...', 'loading');
             
-            const historyQuery = collection(db, 'mealPlanHistory');
+            const historyQuery = collection(db, 'dailyMealHistory');
             const querySnapshot = await getDocs(historyQuery);
             
             const historyData = [];
@@ -393,7 +415,7 @@ class MealPlannerApp {
                 }
             });
 
-            historyData.sort((a, b) => new Date(b.originalDates.day1) - new Date(a.originalDates.day1));
+            historyData.sort((a, b) => new Date(b.date) - new Date(a.date));
             this.displayHistory(historyData);
             
         } catch (error) {
@@ -412,32 +434,16 @@ class MealPlannerApp {
         }
 
         historyContainer.innerHTML = historyData.map(entry => {
-            const startDate = new Date(entry.originalDates.day1);
-            const endDate = new Date(entry.originalDates.day3);
-            
             return `
                 <div class="history-entry">
                     <div class="history-period">
-                        ${this.formatDate(startDate)} ～ ${this.formatDate(endDate)}
+                        ${entry.dateFormatted}
                     </div>
                     <div class="history-meals">
                         <div class="history-day">
-                            <strong>${this.formatDate(startDate)}</strong>
-                            <div>朝: ${entry.day1.breakfast || 'なし'}</div>
-                            <div>昼: ${entry.day1.lunch || 'なし'}</div>
-                            <div>夜: ${entry.day1.dinner || 'なし'}</div>
-                        </div>
-                        <div class="history-day">
-                            <strong>${this.formatDate(new Date(entry.originalDates.day2))}</strong>
-                            <div>朝: ${entry.day2.breakfast || 'なし'}</div>
-                            <div>昼: ${entry.day2.lunch || 'なし'}</div>
-                            <div>夜: ${entry.day2.dinner || 'なし'}</div>
-                        </div>
-                        <div class="history-day">
-                            <strong>${this.formatDate(endDate)}</strong>
-                            <div>朝: ${entry.day3.breakfast || 'なし'}</div>
-                            <div>昼: ${entry.day3.lunch || 'なし'}</div>
-                            <div>夜: ${entry.day3.dinner || 'なし'}</div>
+                            <div>朝: ${entry.breakfast || 'なし'}</div>
+                            <div>昼: ${entry.lunch || 'なし'}</div>
+                            <div>夜: ${entry.dinner || 'なし'}</div>
                         </div>
                     </div>
                 </div>
