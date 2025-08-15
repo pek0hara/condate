@@ -10,24 +10,32 @@
     <div class="container">
         <header>
             <h1>3日分の献立プランナー</h1>
+            <nav class="page-nav">
+                <button id="main-btn" class="nav-btn active">献立入力</button>
+                <button id="meals-btn" class="nav-btn">献立一覧</button>
+                <button id="history-btn" class="nav-btn">履歴</button>
+            </nav>
         </header>
         
-        <main>
+        <main id="main-content">
             <div class="meal-planner">
                 <div class="day-section" data-day="1">
                     <h2>1日目</h2>
                     <div class="meal-inputs">
                         <div class="meal-input">
                             <label>朝食:</label>
-                            <input type="text" id="breakfast-1" placeholder="朝食メニューを入力">
+                            <input type="text" id="breakfast-1" placeholder="朝食メニューを入力" list="breakfast-list">
+                            <datalist id="breakfast-list"></datalist>
                         </div>
                         <div class="meal-input">
                             <label>昼食:</label>
-                            <input type="text" id="lunch-1" placeholder="昼食メニューを入力">
+                            <input type="text" id="lunch-1" placeholder="昼食メニューを入力" list="lunch-list">
+                            <datalist id="lunch-list"></datalist>
                         </div>
                         <div class="meal-input">
                             <label>夕食:</label>
-                            <input type="text" id="dinner-1" placeholder="夕食メニューを入力">
+                            <input type="text" id="dinner-1" placeholder="夕食メニューを入力" list="dinner-list">
+                            <datalist id="dinner-list"></datalist>
                         </div>
                     </div>
                 </div>
@@ -37,15 +45,15 @@
                     <div class="meal-inputs">
                         <div class="meal-input">
                             <label>朝食:</label>
-                            <input type="text" id="breakfast-2" placeholder="朝食メニューを入力">
+                            <input type="text" id="breakfast-2" placeholder="朝食メニューを入力" list="breakfast-list">
                         </div>
                         <div class="meal-input">
                             <label>昼食:</label>
-                            <input type="text" id="lunch-2" placeholder="昼食メニューを入力">
+                            <input type="text" id="lunch-2" placeholder="昼食メニューを入力" list="lunch-list">
                         </div>
                         <div class="meal-input">
                             <label>夕食:</label>
-                            <input type="text" id="dinner-2" placeholder="夕食メニューを入力">
+                            <input type="text" id="dinner-2" placeholder="夕食メニューを入力" list="dinner-list">
                         </div>
                     </div>
                 </div>
@@ -55,15 +63,15 @@
                     <div class="meal-inputs">
                         <div class="meal-input">
                             <label>朝食:</label>
-                            <input type="text" id="breakfast-3" placeholder="朝食メニューを入力">
+                            <input type="text" id="breakfast-3" placeholder="朝食メニューを入力" list="breakfast-list">
                         </div>
                         <div class="meal-input">
                             <label>昼食:</label>
-                            <input type="text" id="lunch-3" placeholder="昼食メニューを入力">
+                            <input type="text" id="lunch-3" placeholder="昼食メニューを入力" list="lunch-list">
                         </div>
                         <div class="meal-input">
                             <label>夕食:</label>
-                            <input type="text" id="dinner-3" placeholder="夕食メニューを入力">
+                            <input type="text" id="dinner-3" placeholder="夕食メニューを入力" list="dinner-list">
                         </div>
                     </div>
                 </div>
@@ -71,12 +79,74 @@
             
             <div class="action-buttons">
                 <button id="save-plan" class="btn btn-primary">献立を保存</button>
-                <button id="load-plan" class="btn btn-secondary">献立を読込</button>
-                <button id="clear-plan" class="btn btn-danger">クリア</button>
                 <button id="share-plan" class="btn btn-success">シェア</button>
             </div>
             
             <div id="status-message" class="status-message"></div>
+        </main>
+
+        <main id="meals-content" style="display: none;">
+            <div class="meals-header">
+                <h2>献立一覧</h2>
+                <p>献立を管理・編集できます。</p>
+                <button id="add-meal-btn" class="btn btn-primary">新しい献立を追加</button>
+            </div>
+            <div id="meals-list" class="meals-container">
+                <!-- 献立一覧がここに表示されます -->
+            </div>
+            
+            <!-- 献立編集モーダル -->
+            <div id="meal-modal" class="modal" style="display: none;">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h3 id="modal-title">献立を編集</h3>
+                        <span class="close" id="close-modal">&times;</span>
+                    </div>
+                    <div class="modal-body">
+                        <form id="meal-form">
+                            <div class="form-group">
+                                <label>献立名:</label>
+                                <input type="text" id="meal-name" placeholder="例：鶏の唐揚げ" required>
+                            </div>
+                            <div class="form-group">
+                                <label>カテゴリ:</label>
+                                <div class="category-checkboxes">
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="category-breakfast" value="breakfast">
+                                        朝食
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="category-lunch" value="lunch">
+                                        昼食
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" id="category-dinner" value="dinner">
+                                        夕食
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>メモ・レシピ:</label>
+                                <textarea id="meal-memo" placeholder="作り方や材料など..."></textarea>
+                            </div>
+                            <div class="form-actions">
+                                <button type="submit" class="btn btn-primary">保存</button>
+                                <button type="button" id="cancel-meal" class="btn btn-secondary">キャンセル</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <main id="history-content" style="display: none;">
+            <div class="history-header">
+                <h2>献立履歴</h2>
+                <p>過去の献立記録を確認できます。</p>
+            </div>
+            <div id="history-list" class="history-container">
+                <!-- 履歴がここに表示されます -->
+            </div>
         </main>
     </div>
 
