@@ -11,16 +11,54 @@ import {
 
 class MealPlannerApp {
     constructor() {
-        this.currentPlanId = 'meal-plan-current';
         this.statusMessage = document.getElementById('status-message');
+        this.currentPlanId = this.initializePlanId();
         this.initializeEventListeners();
         this.loadMealPlan();
+    }
+
+    initializePlanId() {
+        const urlParams = new URLSearchParams(window.location.search);
+        let planId = urlParams.get('id');
+        
+        if (!planId) {
+            planId = localStorage.getItem('currentMealPlanId');
+        }
+        
+        if (!planId) {
+            planId = this.generateNewPlanId();
+            this.updateUrlWithId(planId);
+        }
+        
+        localStorage.setItem('currentMealPlanId', planId);
+        this.updatePageTitle(planId);
+        
+        return planId;
+    }
+
+    generateNewPlanId() {
+        const timestamp = Date.now();
+        const randomPart = Math.random().toString(36).substring(2, 8);
+        return `meal-plan-${timestamp}-${randomPart}`;
+    }
+
+    updateUrlWithId(planId) {
+        const newUrl = new URL(window.location);
+        newUrl.searchParams.set('id', planId);
+        window.history.replaceState({}, '', newUrl);
+    }
+
+    updatePageTitle(planId) {
+        const shortId = planId.split('-').pop();
+        document.title = `献立アプリ - ${shortId}`;
     }
 
     initializeEventListeners() {
         document.getElementById('save-plan').addEventListener('click', () => this.saveMealPlan());
         document.getElementById('load-plan').addEventListener('click', () => this.loadMealPlan());
         document.getElementById('clear-plan').addEventListener('click', () => this.clearMealPlan());
+        document.getElementById('new-plan').addEventListener('click', () => this.createNewPlan());
+        document.getElementById('share-plan').addEventListener('click', () => this.sharePlan());
     }
 
     showStatus(message, type = 'success') {
@@ -101,7 +139,7 @@ class MealPlannerApp {
             const docRef = doc(db, 'mealPlans', this.currentPlanId);
             
             await setDoc(docRef, mealPlan);
-            this.showStatus('献立が正常に保存されました！', 'success');
+            this.showStatus(`献立が正常に保存されました！ (ID: ${this.currentPlanId.split('-').pop()})`, 'success');
             
         } catch (error) {
             console.error('保存エラー:', error);
@@ -119,9 +157,9 @@ class MealPlannerApp {
             if (docSnap.exists()) {
                 const mealPlan = docSnap.data();
                 this.setMealPlanData(mealPlan);
-                this.showStatus('献立が正常に読み込まれました！', 'success');
+                this.showStatus(`献立が正常に読み込まれました！ (ID: ${this.currentPlanId.split('-').pop()})`, 'success');
             } else {
-                this.showStatus('保存された献立が見つかりませんでした。', 'error');
+                this.showStatus(`保存された献立が見つかりませんでした。新しい献立を作成してください。 (ID: ${this.currentPlanId.split('-').pop()})`, 'info');
             }
             
         } catch (error) {
@@ -162,6 +200,33 @@ class MealPlannerApp {
         } catch (error) {
             console.error('更新エラー:', error);
             return false;
+        }
+    }
+
+    createNewPlan() {
+        const newId = this.generateNewPlanId();
+        this.currentPlanId = newId;
+        localStorage.setItem('currentMealPlanId', newId);
+        this.updateUrlWithId(newId);
+        this.updatePageTitle(newId);
+        this.clearAllInputs();
+        this.showStatus(`新しい献立を作成しました！ (ID: ${newId.split('-').pop()})`, 'success');
+    }
+
+    sharePlan() {
+        const currentUrl = window.location.href;
+        
+        if (navigator.share) {
+            navigator.share({
+                title: document.title,
+                url: currentUrl
+            }).catch(console.error);
+        } else {
+            navigator.clipboard.writeText(currentUrl).then(() => {
+                this.showStatus('URLをクリップボードにコピーしました！', 'success');
+            }).catch(() => {
+                prompt('この URLをコピーしてシェアしてください:', currentUrl);
+            });
         }
     }
 }
