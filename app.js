@@ -456,10 +456,14 @@ class MealPlannerApp {
         }
 
         historyContainer.innerHTML = historyData.map(entry => {
+            // 日付を再フォーマットして正確な表示を保証
+            const date = new Date(entry.date + 'T00:00:00+09:00');
+            const dateFormatted = entry.dateFormatted || this.formatDate(date);
+            
             return `
                 <div class="history-entry">
                     <div class="history-period">
-                        ${entry.dateFormatted}
+                        ${dateFormatted}
                     </div>
                     <div class="history-meals">
                         <div class="history-day">
