@@ -171,8 +171,11 @@ class MealPlannerApp {
         };
         
         // 日付をキーとして献立データを保存
+        console.log('=== 保存時の日付デバッグ ===');
         dates.forEach((date, index) => {
             const dateStr = this.dateToJSTString(date);
+            console.log(`保存 Day ${index + 1}: ${this.formatDate(date)} -> ${dateStr}`);
+            
             mealPlan.meals[dateStr] = {
                 date: dateStr,
                 breakfast: document.getElementById(`breakfast-${index + 1}`).value,
@@ -180,6 +183,8 @@ class MealPlannerApp {
                 dinner: document.getElementById(`dinner-${index + 1}`).value
             };
         });
+        console.log('保存する日付:', Object.keys(mealPlan.meals));
+        console.log('========================');
         
         return mealPlan;
     }
@@ -195,9 +200,13 @@ class MealPlannerApp {
         };
 
         const dates = this.getNext3Days();
+        console.log('=== データマッピング デバッグ ===');
         dates.forEach((date, index) => {
             const dateStr = this.dateToJSTString(date);
             const mealData = mealPlan.meals[dateStr];
+            
+            console.log(`Day ${index + 1}: ${this.formatDate(date)} -> ${dateStr}`);
+            console.log(`Data found:`, mealData ? 'YES' : 'NO', mealData);
             
             if (mealData) {
                 setInputValue(`breakfast-${index + 1}`, mealData.breakfast);
@@ -209,6 +218,8 @@ class MealPlannerApp {
                 setInputValue(`dinner-${index + 1}`, '');
             }
         });
+        console.log('Available meal dates in DB:', Object.keys(mealPlan.meals));
+        console.log('===============================');
     }
 
     clearAllInputs() {
@@ -319,8 +330,12 @@ class MealPlannerApp {
             const currentDates = this.getNext3Days();
             const currentDateStrs = currentDates.map(date => this.dateToJSTString(date));
             
+            console.log('=== 日付デバッグ情報 ===');
             console.log('履歴移行チェック - 今日:', today.toISOString().split('T')[0]);
             console.log('現在の3日間:', currentDateStrs);
+            console.log('JST現在時刻:', this.getCurrentJSTDate());
+            console.log('JST日付文字列:', this.dateToJSTString(this.getCurrentJSTDate()));
+            console.log('========================');
             
             // 過去の日付の献立を履歴に移動
             const pastMeals = {};
