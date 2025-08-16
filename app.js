@@ -22,7 +22,10 @@ class MealPlannerApp {
     }
 
     initializeDates() {
-        this.today = new Date();
+        // 日本時間での今日の日付を設定
+        const currentDate = new Date();
+        const jstOffset = 9 * 60; // 日本時間のオフセット（分）
+        this.today = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
         this.updateDateDisplays();
     }
 
@@ -278,19 +281,28 @@ class MealPlannerApp {
 
     async checkAndMigratePastMeals(mealPlan) {
         try {
-            const today = new Date();
+            // 日本時間での今日の日付を取得
+            const currentDate = new Date();
+            const jstOffset = 9 * 60; // 日本時間のオフセット（分）
+            const today = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
             today.setHours(0, 0, 0, 0);
+            
             const currentDates = this.getNext3Days();
             const currentDateStrs = currentDates.map(date => date.toISOString().split('T')[0]);
+            
+            console.log('履歴移行チェック - 今日:', today.toISOString().split('T')[0]);
+            console.log('現在の3日間:', currentDateStrs);
             
             // 過去の日付の献立を履歴に移動
             const pastMeals = {};
             for (const [dateStr, mealData] of Object.entries(mealPlan.meals)) {
-                const mealDate = new Date(dateStr);
-                mealDate.setHours(0, 0, 0, 0);
+                const mealDate = new Date(dateStr + 'T00:00:00');
+                
+                console.log(`日付チェック: ${dateStr} - 過去？${mealDate < today} - 3日間に含まれない？${!currentDateStrs.includes(dateStr)}`);
                 
                 if (mealDate < today && !currentDateStrs.includes(dateStr)) {
                     // 過去の日付で現在の3日間に含まれない
+                    console.log(`履歴に移動: ${dateStr}`, mealData);
                     await this.saveMealToHistory(dateStr, mealData);
                     pastMeals[dateStr] = mealData;
                 }
@@ -759,17 +771,20 @@ class MealPlannerApp {
     }
 
     async checkCurrentDateAndMigrate() {
+        // 日本時間での現在日付を取得
         const currentDate = new Date();
-        currentDate.setHours(0, 0, 0, 0);
+        const jstOffset = 9 * 60; // 日本時間のオフセット（分）
+        const jstDate = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
+        jstDate.setHours(0, 0, 0, 0);
         
         const storedDate = new Date(this.today);
         storedDate.setHours(0, 0, 0, 0);
         
-        if (currentDate.getTime() !== storedDate.getTime()) {
-            console.log('日付が変更されました:', this.formatDate(this.today), '→', this.formatDate(currentDate));
+        if (jstDate.getTime() !== storedDate.getTime()) {
+            console.log('日付が変更されました:', this.formatDate(this.today), '→', this.formatDate(jstDate));
             
-            // 日付を更新
-            this.today = currentDate;
+            // 日付を更新（日本時間）
+            this.today = jstDate;
             
             // 日付表示を更新
             this.updateDateDisplays();
