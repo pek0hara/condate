@@ -12,6 +12,7 @@ import {
 
 class MealPlannerApp {
     constructor() {
+        console.log('🚀 MealPlannerApp starting...');
         this.statusMessage = document.getElementById('status-message');
         this.currentPlanId = this.initializePlanId();
         this.currentPage = 'main';
@@ -19,6 +20,7 @@ class MealPlannerApp {
         this.initializeEventListeners();
         this.loadMealPlan();
         this.loadMealSuggestions();
+        console.log('✅ MealPlannerApp initialized');
     }
 
     initializeDates() {
