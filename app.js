@@ -19,7 +19,6 @@ class MealPlannerApp {
         this.initializeEventListeners();
         this.loadMealPlan();
         this.loadMealSuggestions();
-        this.startDateChangeMonitoring();
     }
 
     initializeDates() {
@@ -109,6 +108,11 @@ class MealPlannerApp {
             if (e.target === document.getElementById('meal-modal')) {
                 this.hideMealModal();
             }
+        });
+        
+        // ページフォーカス時に日付チェック
+        window.addEventListener('focus', () => {
+            this.checkCurrentDateAndMigrate();
         });
     }
 
@@ -206,6 +210,9 @@ class MealPlannerApp {
     async loadMealPlan() {
         try {
             this.showStatus('献立を読み込み中...', 'loading');
+            
+            // まず日付チェックを実行
+            await this.checkCurrentDateAndMigrate();
             
             const docRef = doc(db, 'mealPlans', this.currentPlanId);
             const docSnap = await getDoc(docRef);
@@ -751,32 +758,29 @@ class MealPlannerApp {
             `<option value="${meal}"></option>`).join('');
     }
 
-    startDateChangeMonitoring() {
-        // 日付変更監視用のタイマーを設定
-        this.dateCheckInterval = setInterval(() => {
-            this.checkForDateChange();
-        }, 60000); // 1分ごとにチェック
-    }
-
-    async checkForDateChange() {
-        const newToday = new Date();
-        newToday.setHours(0, 0, 0, 0);
+    async checkCurrentDateAndMigrate() {
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
         
-        const oldToday = new Date(this.today);
-        oldToday.setHours(0, 0, 0, 0);
+        const storedDate = new Date(this.today);
+        storedDate.setHours(0, 0, 0, 0);
         
-        if (newToday.getTime() !== oldToday.getTime()) {
-            console.log('日付が変更されました:', this.formatDate(this.today), '→', this.formatDate(newToday));
+        if (currentDate.getTime() !== storedDate.getTime()) {
+            console.log('日付が変更されました:', this.formatDate(this.today), '→', this.formatDate(currentDate));
             
             // 日付を更新
-            this.today = newToday;
+            this.today = currentDate;
             
             // 日付表示を更新
             this.updateDateDisplays();
             
             // 過去の献立を履歴に移動
             await this.handleDateChange();
+            
+            return true; // 日付が変更された
         }
+        
+        return false; // 日付は変更されていない
     }
 
     async handleDateChange() {
