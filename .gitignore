@@ -4,6 +4,7 @@ node_modules/
 # Firebase cache and config
 .firebase/
 firebase-config.js
+firebase-init.js
 
 # OS generated files
 .DS_Store
