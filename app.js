@@ -23,10 +23,16 @@ class MealPlannerApp {
 
     initializeDates() {
         // 日本時間での今日の日付を設定
-        const currentDate = new Date();
-        const jstOffset = 9 * 60; // 日本時間のオフセット（分）
-        this.today = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
+        this.today = this.getCurrentJSTDate();
         this.updateDateDisplays();
+    }
+
+    getCurrentJSTDate() {
+        // 現在のJST日付を確実に取得
+        const now = new Date();
+        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
+        const jst = new Date(utc + (9 * 3600000)); // JST = UTC + 9時間
+        return jst;
     }
 
     updateDateDisplays() {
@@ -38,9 +44,11 @@ class MealPlannerApp {
 
     getNext3Days() {
         const dates = [];
+        const baseDate = this.getCurrentJSTDate();
+        
         for (let i = 0; i < 3; i++) {
-            const date = new Date(this.today);
-            date.setDate(this.today.getDate() + i);
+            const date = new Date(baseDate);
+            date.setDate(baseDate.getDate() + i);
             dates.push(date);
         }
         return dates;
@@ -290,9 +298,7 @@ class MealPlannerApp {
     async checkAndMigratePastMeals(mealPlan) {
         try {
             // 日本時間での今日の日付を取得
-            const currentDate = new Date();
-            const jstOffset = 9 * 60; // 日本時間のオフセット（分）
-            const today = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
+            const today = this.getCurrentJSTDate();
             today.setHours(0, 0, 0, 0);
             
             const currentDates = this.getNext3Days();
@@ -786,9 +792,7 @@ class MealPlannerApp {
 
     async checkCurrentDateAndMigrate() {
         // 日本時間での現在日付を取得
-        const currentDate = new Date();
-        const jstOffset = 9 * 60; // 日本時間のオフセット（分）
-        const jstDate = new Date(currentDate.getTime() + (jstOffset * 60 * 1000));
+        const jstDate = this.getCurrentJSTDate();
         jstDate.setHours(0, 0, 0, 0);
         
         const storedDate = new Date(this.today);
