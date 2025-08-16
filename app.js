@@ -28,11 +28,20 @@ class MealPlannerApp {
     }
 
     getCurrentJSTDate() {
-        // 現在のJST日付を確実に取得
+        // 現在のJST日付を確実に取得（サーバー環境対応）
         const now = new Date();
-        const utc = now.getTime() + (now.getTimezoneOffset() * 60000);
-        const jst = new Date(utc + (9 * 3600000)); // JST = UTC + 9時間
-        return jst;
+        
+        // 日本時間での日付文字列を直接作成
+        const jstDateStr = now.toLocaleDateString('ja-JP', {
+            timeZone: 'Asia/Tokyo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        // YYYY/MM/DD を YYYY-MM-DD に変換してDateオブジェクト作成
+        const [year, month, day] = jstDateStr.split('/');
+        return new Date(year, month - 1, day);
     }
 
     updateDateDisplays() {
@@ -64,10 +73,16 @@ class MealPlannerApp {
 
     dateToJSTString(date) {
         // 日本時間での日付文字列を取得 (YYYY-MM-DD形式)
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        // toLocaleDateStringを使用して確実にJSTで処理
+        const jstDateStr = date.toLocaleDateString('ja-JP', {
+            timeZone: 'Asia/Tokyo',
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+        
+        // YYYY/MM/DD を YYYY-MM-DD に変換
+        return jstDateStr.replace(/\//g, '-');
     }
 
 
