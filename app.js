@@ -296,7 +296,8 @@ class MealPlannerApp {
             // 過去の日付の献立を履歴に移動
             const pastMeals = {};
             for (const [dateStr, mealData] of Object.entries(mealPlan.meals)) {
-                const mealDate = new Date(dateStr + 'T00:00:00');
+                // 日付文字列をJSTとして正確に解釈
+                const mealDate = new Date(dateStr + 'T00:00:00+09:00');
                 
                 console.log(`日付チェック: ${dateStr} - 過去？${mealDate < today} - 3日間に含まれない？${!currentDateStrs.includes(dateStr)}`);
                 
@@ -370,7 +371,8 @@ class MealPlannerApp {
     async saveMealToHistory(dateStr, mealData) {
         try {
             const historyId = `history-${this.currentPlanId}-${dateStr}`;
-            const date = new Date(dateStr);
+            // 日付文字列をJSTとして正確に解釈
+            const date = new Date(dateStr + 'T00:00:00+09:00');
             
             const historyData = {
                 planId: this.currentPlanId,
