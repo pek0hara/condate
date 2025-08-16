@@ -31,9 +31,14 @@
 3. アプリ名を入力して登録
 4. 設定オブジェクトをコピー
 
-### 4. 設定ファイルの更新
+### 4. 設定ファイルの作成
 
-`firebase-config.js` ファイル内の `firebaseConfig` オブジェクトを、Firebase Console で取得した設定に置き換えてください。
+1. テンプレートファイルをコピーして設定ファイルを作成:
+```bash
+cp firebase-init.js.example firebase-init.js
+```
+
+2. `firebase-init.js` ファイル内の `firebaseConfig` オブジェクトを、Firebase Console で取得した設定に置き換えてください。
 
 ```javascript
 const firebaseConfig = {
@@ -46,15 +51,18 @@ const firebaseConfig = {
 };
 ```
 
+⚠️ **セキュリティ注意**: `firebase-init.js` は `.gitignore` に含まれており、Git にコミットされません。Firebase認証情報を安全に保護します。
+
 ## ファイル構成
 
 ```
 condate/
-├── index.html          # メインHTMLファイル
-├── style.css           # スタイルシート
-├── app.js              # メインJavaScriptファイル
-├── firebase-config.js  # Firebase設定
-└── README.md          # このファイル
+├── index.html              # メインHTMLファイル
+├── style.css               # スタイルシート
+├── app.js                  # メインJavaScriptファイル
+├── firebase-init.js        # Firebase設定（.gitignoreに含まれる）
+├── firebase-init.js.example # Firebase設定テンプレート
+└── README.md              # このファイル
 ```
 
 ## 使用技術
