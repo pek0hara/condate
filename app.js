@@ -54,6 +54,14 @@ class MealPlannerApp {
         return `${month}月${day}日(${weekday})`;
     }
 
+    dateToJSTString(date) {
+        // 日本時間での日付文字列を取得 (YYYY-MM-DD形式)
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
 
     initializePlanId() {
         const urlParams = new URLSearchParams(window.location.search);
@@ -141,7 +149,7 @@ class MealPlannerApp {
         
         // 日付をキーとして献立データを保存
         dates.forEach((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.dateToJSTString(date);
             mealPlan.meals[dateStr] = {
                 date: dateStr,
                 breakfast: document.getElementById(`breakfast-${index + 1}`).value,
@@ -165,7 +173,7 @@ class MealPlannerApp {
 
         const dates = this.getNext3Days();
         dates.forEach((date, index) => {
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = this.dateToJSTString(date);
             const mealData = mealPlan.meals[dateStr];
             
             if (mealData) {
@@ -288,7 +296,7 @@ class MealPlannerApp {
             today.setHours(0, 0, 0, 0);
             
             const currentDates = this.getNext3Days();
-            const currentDateStrs = currentDates.map(date => date.toISOString().split('T')[0]);
+            const currentDateStrs = currentDates.map(date => this.dateToJSTString(date));
             
             console.log('履歴移行チェック - 今日:', today.toISOString().split('T')[0]);
             console.log('現在の3日間:', currentDateStrs);
