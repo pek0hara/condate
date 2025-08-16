@@ -1,4 +1,4 @@
-import { db } from './firebase-config.js';
+import { db } from './firebase-init.js';
 import { 
     collection, 
     doc, 
@@ -754,11 +754,13 @@ class MealPlannerApp {
 document.addEventListener('DOMContentLoaded', () => {
     try {
         const app = new MealPlannerApp();
-        console.log('献立アプリが正常に初期化されました');
     } catch (error) {
         console.error('アプリの初期化に失敗しました:', error);
-        document.getElementById('status-message').textContent = 'アプリの初期化に失敗しました。Firebase設定を確認してください。';
-        document.getElementById('status-message').className = 'status-message error';
+        const statusElement = document.getElementById('status-message');
+        if (statusElement) {
+            statusElement.textContent = 'アプリの初期化に失敗しました。Firebase設定を確認してください。';
+            statusElement.className = 'status-message error';
+        }
     }
 });
 
